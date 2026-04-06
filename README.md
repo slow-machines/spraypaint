@@ -1,6 +1,6 @@
 # spraypaint
 
-Terminal string styling for Rust -- the Chalk-inspired library with best-in-class developer ergonomics.
+Terminal string styling for Rust.
 
 ```
 cargo add spraypaint

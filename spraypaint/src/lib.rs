@@ -1,6 +1,6 @@
 //! # spraypaint
 //!
-//! Terminal string styling for Rust -- inspired by [Chalk](https://github.com/chalk/chalk).
+//! Terminal string styling for Rust.
 //!
 //! ## Quick Start
 //!

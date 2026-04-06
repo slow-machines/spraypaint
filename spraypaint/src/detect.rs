@@ -15,7 +15,7 @@
 use std::io::IsTerminal as _;
 use std::sync::atomic::{AtomicU8, Ordering};
 
-/// Color capability level, mirroring Chalk's `level` property.
+/// Color capability level.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum ColorLevel {
