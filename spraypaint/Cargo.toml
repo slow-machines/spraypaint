@@ -13,7 +13,7 @@ keywords = ["terminal", "color", "ansi", "styling", "cli"]
 categories = ["command-line-interface"]
 
 [dependencies]
-spraypaint-macros = { path = "../spraypaint-macros" }
+spraypaint-macros = { version = "0.1.0", path = "../spraypaint-macros" }
 bitflags = "2"
 arrayvec = { version = "0.7", default-features = false }
 
