@@ -6,10 +6,6 @@
 
 Terminal string styling for Rust.
 
-```
-cargo add spraypaint
-```
-
 ---
 
 ## Why spraypaint?
@@ -23,8 +19,6 @@ cargo add spraypaint
 | Gradient text | yes | no | no |
 | Compile-time style validation | yes (macro) | no | no |
 | Auto color detection | yes | yes | yes |
-| `no_std` core | planned | yes | no |
-
 ---
 
 ## Quick Start
