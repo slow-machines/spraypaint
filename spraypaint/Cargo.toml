@@ -1,0 +1,20 @@
+[package]
+name = "spraypaint"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+description = "Terminal string styling done right -- the Chalk for Rust"
+license = "MIT"
+repository = "https://github.com/apurvalal/spraypaint"
+homepage = "https://github.com/apurvalal/spraypaint"
+documentation = "https://docs.rs/spraypaint"
+readme = "../README.md"
+keywords = ["terminal", "color", "ansi", "styling", "cli"]
+categories = ["command-line-interface"]
+
+[dependencies]
+spraypaint-macros = { path = "../spraypaint-macros" }
+bitflags = "2"
+arrayvec = { version = "0.7", default-features = false }
+
+[dev-dependencies]

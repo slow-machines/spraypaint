@@ -1,0 +1,18 @@
+[package]
+name = "spraypaint-macros"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+description = "Procedural macros for the spraypaint terminal styling crate"
+license = "MIT"
+repository = "https://github.com/apurvalal/spraypaint"
+keywords = ["terminal", "color", "ansi", "macro", "proc-macro"]
+categories = ["command-line-interface"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
