@@ -10,21 +10,6 @@ Terminal string styling for Rust.
 cargo add spraypaint
 ```
 
----
-
-## Why spraypaint?
-
-| Feature | spraypaint | owo-colors | colored |
-|---|---|---|---|
-| `paint!` macro (prints directly) | yes | no | no |
-| Tagged-template syntax | yes | no | no |
-| `.paint()` terminal method | yes | no | no |
-| RGB / hex colors | yes | yes | no |
-| Gradient text | yes | no | no |
-| Compile-time style validation | yes (macro) | no | no |
-| Auto color detection | yes | yes | yes |
----
-
 ## Quick Start
 
 ```rust
