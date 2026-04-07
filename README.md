@@ -1,7 +1,7 @@
 # spraypaint
 
 <p align="center">
-    <img width="250" height="250" alt="logo" src="https://github.com/user-attachments/assets/098d36e6-eeea-430a-be4e-9f6dbd63abcb" />
+    <img width="250" height="250" alt="logo" src="https://i.postimg.cc/JhqpCWDh/logo.png" />
 </p>
 
 Terminal string styling for Rust.
