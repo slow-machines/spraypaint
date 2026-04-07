@@ -6,6 +6,10 @@
 
 Terminal string styling for Rust.
 
+```
+cargo add spraypaint
+```
+
 ---
 
 ## Why spraypaint?
