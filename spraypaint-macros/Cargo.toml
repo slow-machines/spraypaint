@@ -1,6 +1,6 @@
 [package]
 name = "spraypaint-macros"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.70"
 description = "Procedural macros for the spraypaint terminal styling crate"

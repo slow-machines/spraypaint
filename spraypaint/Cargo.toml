@@ -1,6 +1,6 @@
 [package]
 name = "spraypaint"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.70"
 description = "Terminal string styling for Rust"
@@ -11,7 +11,7 @@ keywords = ["terminal", "color", "ansi", "styling", "cli"]
 categories = ["command-line-interface"]
 
 [dependencies]
-spraypaint-macros = { version = "0.1.1", path = "../spraypaint-macros" }
+spraypaint-macros = { version = "0.1.2", path = "../spraypaint-macros" }
 bitflags = "2"
 arrayvec = { version = "0.7", default-features = false }
 
