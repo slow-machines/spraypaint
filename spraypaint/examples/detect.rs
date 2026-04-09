@@ -1,11 +1,6 @@
-//! Demonstrates color level detection and override.
+//! cargo run --example detect
 //!
-//! Run with: cargo run --example detect
-//!
-//! Try:
-//!   NO_COLOR=1 cargo run --example detect
-//!   FORCE_COLOR=3 cargo run --example detect
-//!   COLORTERM=truecolor cargo run --example detect
+//! Try: NO_COLOR=1, FORCE_COLOR=3, COLORTERM=truecolor
 
 use spraypaint::{color_level, set_color_level, ColorLevel, Colorize};
 
@@ -39,7 +34,6 @@ fn main() {
 }
 
 fn render_samples() {
-    // This RGB color downgrades gracefully at lower levels.
     "Truecolor RGB (255, 87, 51)".rgb(255, 87, 51).paint();
     "Hex color #6c5ce7".hex("#6c5ce7").paint();
     "Basic red".red().bold().paint();

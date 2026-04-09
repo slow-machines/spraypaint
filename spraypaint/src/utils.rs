@@ -1,17 +1,9 @@
-//! Utility functions for working with ANSI-styled strings.
+//! ANSI utility helpers.
 
-/// Remove all ANSI escape sequences from a string, returning plain text.
+/// Strip CSI escape sequences (`ESC [ ... final_byte`), returning plain text.
 ///
-/// This is useful when you need to compute the visible width of a styled string,
-/// write output to a file, or pass text to a library that does not expect escape codes.
-///
-/// Only CSI sequences (`ESC [` ...) are stripped; other ESC sequences (e.g. OSC
-/// hyperlinks) are passed through unchanged with the ESC character dropped.
-///
-/// # Example
 /// ```
 /// use spraypaint::{Colorize, strip_ansi};
-///
 /// let styled = "hello".red().bold().to_string();
 /// assert_eq!(strip_ansi(&styled), "hello");
 /// ```
@@ -25,18 +17,16 @@ pub fn strip_ansi(s: &str) -> String {
             continue;
         }
 
-        // ESC character: check for CSI (`ESC [`)
         if chars.peek() == Some(&'[') {
-            chars.next(); // consume '['
-                          // Consume the CSI sequence until a "final byte" (0x40–0x7E = '@' to '~').
+            chars.next();
+            // Consume until the CSI final byte (0x40–0x7E).
             for next in chars.by_ref() {
                 if ('\x40'..='\x7e').contains(&next) {
-                    break; // final byte consumed; sequence ends
+                    break;
                 }
             }
         }
-        // For any other ESC sequence, just drop the ESC and let the
-        // following character be processed normally on the next iteration.
+        // Non-CSI ESC: drop the ESC, let the next char pass through.
     }
 
     result
@@ -48,7 +38,6 @@ mod tests {
 
     #[test]
     fn strips_simple_color() {
-        // ESC[31m = red; ESC[0m = reset
         assert_eq!(strip_ansi("\x1b[31mhello\x1b[0m"), "hello");
     }
 

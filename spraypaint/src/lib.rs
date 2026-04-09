@@ -55,11 +55,10 @@ pub use style::{Attrs, Style};
 pub use styled::Styled;
 pub use utils::strip_ansi;
 
-// Macros from the proc-macro crate.
 pub use spraypaint_macros::paint;
 pub use spraypaint_macros::styled;
 
-/// Convenience re-export: `use spraypaint::prelude::*` brings the most common items into scope.
+/// Common imports: `use spraypaint::prelude::*`.
 pub mod prelude {
     pub use crate::color::Color;
     pub use crate::ext::Colorize;

@@ -1,7 +1,4 @@
-//! Low-level ANSI SGR (Select Graphic Rendition) escape code writing.
-//!
-//! All output goes through a single `write_ansi` function so that the rendering
-//! path is easy to swap out (e.g., for a no-color level).
+//! Low-level ANSI SGR escape code writing.
 
 use std::fmt;
 
@@ -9,23 +6,17 @@ use crate::color::{AnsiColor, Color};
 use crate::detect::ColorLevel;
 use crate::style::{Attrs, Style};
 
-/// ANSI escape sequence prefix.
 const ESC: &str = "\x1b[";
-/// SGR reset code.
 const RESET: &str = "\x1b[0m";
 
-/// Write the opening ANSI codes for `style` into `f`, respecting the active color level.
 pub(crate) fn write_open(f: &mut fmt::Formatter<'_>, style: &Style) -> fmt::Result {
     let level = crate::detect::color_level();
-
     if level == ColorLevel::None {
         return Ok(());
     }
 
-    // Collect all SGR parameters into a small buffer to emit one escape sequence.
     let mut params: arrayvec::ArrayVec<u8, 12> = arrayvec::ArrayVec::new();
 
-    // Attributes
     if style.attrs.contains(Attrs::BOLD) {
         params.push(1);
     }
@@ -54,22 +45,17 @@ pub(crate) fn write_open(f: &mut fmt::Formatter<'_>, style: &Style) -> fmt::Resu
         params.push(9);
     }
 
-    // Foreground color
     if let Some(fg) = style.fg {
         write_color_params(f, fg, false, level, &mut params)?;
     }
-
-    // Background color
     if let Some(bg) = style.bg {
         write_color_params(f, bg, true, level, &mut params)?;
     }
 
-    // Emit nothing if there's nothing to apply
     if params.is_empty() {
         return Ok(());
     }
 
-    // Write a single ESC[ ... m sequence
     write!(f, "{ESC}")?;
     for (i, &p) in params.iter().enumerate() {
         if i > 0 {
@@ -80,13 +66,11 @@ pub(crate) fn write_open(f: &mut fmt::Formatter<'_>, style: &Style) -> fmt::Resu
     write!(f, "m")
 }
 
-/// Write the ANSI reset sequence.
 pub(crate) fn write_close(f: &mut fmt::Formatter<'_>, style: &Style) -> fmt::Result {
     let level = crate::detect::color_level();
     if level == ColorLevel::None {
         return Ok(());
     }
-    // Only write reset if the style actually does something.
     let has_style = style.fg.is_some() || style.bg.is_some() || !style.attrs.is_empty();
     if has_style {
         write!(f, "{RESET}")?;
@@ -94,8 +78,7 @@ pub(crate) fn write_close(f: &mut fmt::Formatter<'_>, style: &Style) -> fmt::Res
     Ok(())
 }
 
-/// Downgrade a color to the supported level and push its SGR parameters.
-/// `is_bg` true means we're targeting the background.
+/// Downgrade `color` to the active level and append SGR params (or flush inline).
 fn write_color_params(
     f: &mut fmt::Formatter<'_>,
     color: Color,
@@ -110,16 +93,13 @@ fn write_color_params(
         }
         Color::Xterm(idx) => {
             if level >= ColorLevel::Xterm256 {
+                flush_params(f, params)?;
                 if is_bg {
-                    // Flush params so far, write 256-color sequence inline
-                    flush_params(f, params)?;
                     write!(f, "{ESC}48;5;{idx}m")?;
                 } else {
-                    flush_params(f, params)?;
                     write!(f, "{ESC}38;5;{idx}m")?;
                 }
             } else {
-                // Downgrade to nearest ANSI-16 color
                 let ansi = xterm_to_ansi16(idx);
                 let code = if is_bg {
                     ansi.bg_code()
@@ -159,7 +139,6 @@ fn write_color_params(
     Ok(())
 }
 
-/// Emit any buffered single-byte params as a partial SGR sequence, then clear the buffer.
 fn flush_params(
     f: &mut fmt::Formatter<'_>,
     params: &mut arrayvec::ArrayVec<u8, 12>,
@@ -179,9 +158,7 @@ fn flush_params(
     Ok(())
 }
 
-/// Best-effort mapping from an Xterm-256 index to the nearest ANSI-16 name.
 fn xterm_to_ansi16(idx: u8) -> AnsiColor {
-    // The first 16 indices are exactly the ANSI colors.
     match idx {
         0 => AnsiColor::Black,
         1 => AnsiColor::Red,
@@ -199,7 +176,6 @@ fn xterm_to_ansi16(idx: u8) -> AnsiColor {
         13 => AnsiColor::BrightMagenta,
         14 => AnsiColor::BrightCyan,
         15 => AnsiColor::BrightWhite,
-        // For the 216-color cube and grayscale ramp, map to nearest brightness.
         16..=231 => {
             let v = idx - 16;
             let brightness = (v / 36) * 4 + ((v % 36) / 6) * 2 + (v % 6);
@@ -219,9 +195,7 @@ fn xterm_to_ansi16(idx: u8) -> AnsiColor {
     }
 }
 
-/// Map an RGB color to the nearest Xterm 256-color cube index.
 pub(crate) fn rgb_to_xterm256(r: u8, g: u8, b: u8) -> u8 {
-    // Grayscale ramp check (16 steps, indices 232-255)
     let avg = (r as u16 + g as u16 + b as u16) / 3;
     if (r as i16 - avg as i16).abs() < 8
         && (g as i16 - avg as i16).abs() < 8
@@ -232,14 +206,12 @@ pub(crate) fn rgb_to_xterm256(r: u8, g: u8, b: u8) -> u8 {
         let gs = ((avg - 8) as f32 / 247.0 * 24.0).round() as u8;
         return 232 + gs.min(23);
     }
-    // 6x6x6 color cube (indices 16-231)
     let ri = ((r as f32 / 255.0) * 5.0).round() as u8;
     let gi = ((g as f32 / 255.0) * 5.0).round() as u8;
     let bi = ((b as f32 / 255.0) * 5.0).round() as u8;
     16 + 36 * ri + 6 * gi + bi
 }
 
-/// Map an RGB color to the nearest ANSI-16 name using simple luminance bucketing.
 fn rgb_to_ansi16(r: u8, g: u8, b: u8) -> AnsiColor {
     let bright = (r as u16 + g as u16 + b as u16) > 382;
     let dominant_r = r > g && r > b;
@@ -296,14 +268,12 @@ mod tests {
 
     #[test]
     fn xterm256_from_rgb() {
-        // Pure red should map to index 196 in the 6x6x6 cube
         let idx = rgb_to_xterm256(255, 0, 0);
         assert_eq!(idx, 196);
     }
 
     #[test]
     fn grayscale_ramp() {
-        // Mid-gray should land in the grayscale ramp (232-255)
         let idx = rgb_to_xterm256(128, 128, 128);
         assert!(idx >= 232, "expected grayscale, got {idx}");
     }

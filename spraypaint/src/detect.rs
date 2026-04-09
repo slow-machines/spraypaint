@@ -1,31 +1,23 @@
 //! Terminal color capability detection.
 //!
-//! On first access, spraypaint auto-detects the color level from the environment.
-//! The level can be overridden at runtime with [`set_color_level`].
+//! Auto-detected on first access; override with [`set_color_level`].
 //!
-//! # Environment Variables
-//! - `NO_COLOR` (any value) → level 0 (no color)
-//! - `FORCE_COLOR=1` → level 1 (basic 16)
-//! - `FORCE_COLOR=2` → level 2 (256-color)
-//! - `FORCE_COLOR=3` → level 3 (truecolor)
-//! - `COLORTERM=truecolor` or `COLORTERM=24bit` → level 3
-//! - `TERM=xterm-256color` etc. → level 2
-//! - `TERM=xterm` etc. → level 1
+//! Checks (highest priority first): `NO_COLOR`, `FORCE_COLOR`, `COLORTERM`, `TERM`, TTY.
 
 use std::io::IsTerminal as _;
 use std::sync::atomic::{AtomicU8, Ordering};
 
-/// Color capability level.
+/// Terminal color capability tier.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum ColorLevel {
-    /// No color output; all ANSI codes are stripped.
+    /// Strip all ANSI codes.
     None = 0,
-    /// Basic 16-color (4-bit ANSI).
+    /// 4-bit / 16 colors.
     Basic16 = 1,
-    /// 256-color Xterm palette (8-bit).
+    /// 8-bit / 256 colors.
     Xterm256 = 2,
-    /// 24-bit truecolor RGB.
+    /// 24-bit truecolor.
     TrueColor = 3,
 }
 
@@ -40,19 +32,10 @@ impl ColorLevel {
     }
 }
 
-/// Sentinel value meaning "not yet initialized".
 const UNSET: u8 = 255;
-
 static LEVEL: AtomicU8 = AtomicU8::new(UNSET);
 
-/// Return the current global color level, auto-detecting on first call.
-///
-/// Detection priority (highest wins):
-/// 1. `NO_COLOR` env var → [`ColorLevel::None`]
-/// 2. `FORCE_COLOR` env var (1/2/3) → forced level
-/// 3. `COLORTERM=truecolor` / `COLORTERM=24bit` → [`ColorLevel::TrueColor`]
-/// 4. `TERM`-based heuristics
-/// 5. Actual TTY check on stdout (via `std::io::IsTerminal`)
+/// Current color level (auto-detects on first call).
 pub fn color_level() -> ColorLevel {
     let v = LEVEL.load(Ordering::Relaxed);
     if v == UNSET {
@@ -66,39 +49,25 @@ pub fn color_level() -> ColorLevel {
     }
 }
 
-/// Override the global color level, bypassing auto-detection.
-///
-/// Call this early in `main` if you want consistent behavior regardless of the
-/// terminal environment.
-///
-/// # Example
-/// ```rust,no_run
-/// use spraypaint::detect::{set_color_level, ColorLevel};
-/// set_color_level(ColorLevel::None); // disable color entirely
-/// ```
+/// Force a specific color level, bypassing detection.
 pub fn set_color_level(level: ColorLevel) {
     LEVEL.store(level as u8, Ordering::Relaxed);
 }
 
-/// Detect the color level from the process environment.
 fn detect() -> ColorLevel {
-    // NO_COLOR takes priority over everything.
     if std::env::var_os("NO_COLOR").is_some() {
         return ColorLevel::None;
     }
 
-    // FORCE_COLOR allows CI / pipelines to force a specific level.
     if let Ok(val) = std::env::var("FORCE_COLOR") {
         return match val.trim() {
             "1" => ColorLevel::Basic16,
             "2" => ColorLevel::Xterm256,
             "3" => ColorLevel::TrueColor,
-            // "true" or non-numeric → basic color
             _ => ColorLevel::Basic16,
         };
     }
 
-    // COLORTERM=truecolor or 24bit → truecolor
     if let Ok(ct) = std::env::var("COLORTERM") {
         let ct = ct.to_ascii_lowercase();
         if ct == "truecolor" || ct == "24bit" {
@@ -106,7 +75,6 @@ fn detect() -> ColorLevel {
         }
     }
 
-    // TERM-based heuristics
     if let Ok(term) = std::env::var("TERM") {
         let term = term.to_ascii_lowercase();
         if term.contains("256color") {
@@ -126,7 +94,6 @@ fn detect() -> ColorLevel {
         }
     }
 
-    // Windows Terminal and modern Windows console → truecolor
     #[cfg(windows)]
     if std::env::var_os("WT_SESSION").is_some()
         || std::env::var_os("TERM_PROGRAM").map_or(false, |v| v == "vscode")
@@ -134,13 +101,10 @@ fn detect() -> ColorLevel {
         return ColorLevel::TrueColor;
     }
 
-    // On CI environments without a TTY, default to basic color so output is
-    // readable when viewed in a browser log.
     if std::env::var_os("CI").is_some() {
         return ColorLevel::Basic16;
     }
 
-    // Real TTY check: emit color only when stdout is actually a terminal.
     if std::io::stdout().is_terminal() {
         ColorLevel::Basic16
     } else {

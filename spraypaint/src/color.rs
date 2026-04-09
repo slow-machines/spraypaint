@@ -1,44 +1,43 @@
-//! Color types supporting Basic 16, Xterm 256, and 24-bit RGB.
+//! Color types: ANSI 16, Xterm 256, and 24-bit RGB.
 
-/// A named ANSI 4-bit color (the standard 16-color palette).
+/// Standard 16-color ANSI palette.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AnsiColor {
-    /// Black (SGR 30 / 40).
+    /// SGR 30/40
     Black,
-    /// Red (SGR 31 / 41).
+    /// SGR 31/41
     Red,
-    /// Green (SGR 32 / 42).
+    /// SGR 32/42
     Green,
-    /// Yellow (SGR 33 / 43).
+    /// SGR 33/43
     Yellow,
-    /// Blue (SGR 34 / 44).
+    /// SGR 34/44
     Blue,
-    /// Magenta (SGR 35 / 45).
+    /// SGR 35/45
     Magenta,
-    /// Cyan (SGR 36 / 46).
+    /// SGR 36/46
     Cyan,
-    /// White (SGR 37 / 47).
+    /// SGR 37/47
     White,
-    /// Bright black / dark gray (SGR 90 / 100).
+    /// SGR 90/100
     BrightBlack,
-    /// Bright red (SGR 91 / 101).
+    /// SGR 91/101
     BrightRed,
-    /// Bright green (SGR 92 / 102).
+    /// SGR 92/102
     BrightGreen,
-    /// Bright yellow (SGR 93 / 103).
+    /// SGR 93/103
     BrightYellow,
-    /// Bright blue (SGR 94 / 104).
+    /// SGR 94/104
     BrightBlue,
-    /// Bright magenta (SGR 95 / 105).
+    /// SGR 95/105
     BrightMagenta,
-    /// Bright cyan (SGR 96 / 106).
+    /// SGR 96/106
     BrightCyan,
-    /// Bright white (SGR 97 / 107).
+    /// SGR 97/107
     BrightWhite,
 }
 
 impl AnsiColor {
-    /// Returns the foreground SGR code for this color.
     pub(crate) fn fg_code(self) -> u8 {
         match self {
             Self::Black => 30,
@@ -60,79 +59,70 @@ impl AnsiColor {
         }
     }
 
-    /// Returns the background SGR code for this color.
     pub(crate) fn bg_code(self) -> u8 {
         self.fg_code() + 10
     }
 }
 
-/// A terminal color: basic 16-color, 256-color Xterm, or 24-bit RGB.
+/// Terminal color: ANSI 16, Xterm 256, or 24-bit RGB.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Color {
-    /// One of the 16 standard ANSI colors.
+    /// Standard 16-color.
     Ansi(AnsiColor),
-    /// An Xterm 256-color palette index (0–255).
+    /// Xterm palette index (0–255).
     Xterm(u8),
-    /// A 24-bit RGB truecolor value.
+    /// 24-bit truecolor.
     Rgb(u8, u8, u8),
 }
 
 impl Color {
-    // ── Named constants ──────────────────────────────────────────────────────
-
-    /// ANSI black.
+    #[allow(missing_docs)]
     pub const BLACK: Color = Color::Ansi(AnsiColor::Black);
-    /// ANSI red.
+    #[allow(missing_docs)]
     pub const RED: Color = Color::Ansi(AnsiColor::Red);
-    /// ANSI green.
+    #[allow(missing_docs)]
     pub const GREEN: Color = Color::Ansi(AnsiColor::Green);
-    /// ANSI yellow.
+    #[allow(missing_docs)]
     pub const YELLOW: Color = Color::Ansi(AnsiColor::Yellow);
-    /// ANSI blue.
+    #[allow(missing_docs)]
     pub const BLUE: Color = Color::Ansi(AnsiColor::Blue);
-    /// ANSI magenta.
+    #[allow(missing_docs)]
     pub const MAGENTA: Color = Color::Ansi(AnsiColor::Magenta);
-    /// ANSI cyan.
+    #[allow(missing_docs)]
     pub const CYAN: Color = Color::Ansi(AnsiColor::Cyan);
-    /// ANSI white.
+    #[allow(missing_docs)]
     pub const WHITE: Color = Color::Ansi(AnsiColor::White);
-    /// ANSI bright black (dark gray).
+    #[allow(missing_docs)]
     pub const BRIGHT_BLACK: Color = Color::Ansi(AnsiColor::BrightBlack);
-    /// ANSI bright red.
+    #[allow(missing_docs)]
     pub const BRIGHT_RED: Color = Color::Ansi(AnsiColor::BrightRed);
-    /// ANSI bright green.
+    #[allow(missing_docs)]
     pub const BRIGHT_GREEN: Color = Color::Ansi(AnsiColor::BrightGreen);
-    /// ANSI bright yellow.
+    #[allow(missing_docs)]
     pub const BRIGHT_YELLOW: Color = Color::Ansi(AnsiColor::BrightYellow);
-    /// ANSI bright blue.
+    #[allow(missing_docs)]
     pub const BRIGHT_BLUE: Color = Color::Ansi(AnsiColor::BrightBlue);
-    /// ANSI bright magenta.
+    #[allow(missing_docs)]
     pub const BRIGHT_MAGENTA: Color = Color::Ansi(AnsiColor::BrightMagenta);
-    /// ANSI bright cyan.
+    #[allow(missing_docs)]
     pub const BRIGHT_CYAN: Color = Color::Ansi(AnsiColor::BrightCyan);
-    /// ANSI bright white.
+    #[allow(missing_docs)]
     pub const BRIGHT_WHITE: Color = Color::Ansi(AnsiColor::BrightWhite);
 
-    // ── Named constructors ───────────────────────────────────────────────────
-
-    /// Create a 24-bit RGB color.
+    /// 24-bit RGB.
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
         Color::Rgb(r, g, b)
     }
 
-    /// Create an Xterm 256-color palette index (0–255).
+    /// Xterm 256-color palette index.
     pub const fn xterm(index: u8) -> Self {
         Color::Xterm(index)
     }
 
-    /// Parse a CSS hex color string (`#RGB`, `#RRGGBB`, with or without the leading `#`).
+    /// Parse `#RGB` or `#RRGGBB` (leading `#` optional). Returns `None` on bad input.
     ///
-    /// Returns `None` if the string is not a valid hex color.
-    ///
-    /// # Examples
     /// ```
     /// use spraypaint::Color;
-    ///
     /// assert_eq!(Color::from_hex("#ff5733"), Some(Color::Rgb(255, 87, 51)));
     /// assert_eq!(Color::from_hex("#f00"),    Some(Color::Rgb(255, 0, 0)));
     /// assert_eq!(Color::from_hex("#xyz"),     None);

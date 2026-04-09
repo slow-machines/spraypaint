@@ -10,19 +10,13 @@ use syn::{
     parse_macro_input, LitStr, Token,
 };
 
-// ── Public macro entrypoints ──────────────────────────────────────────────────
-
-/// Print styled text to stdout with a trailing newline.
+/// Print styled text to stdout (with trailing newline by default).
 ///
-/// # Syntax
 /// ```text
 /// paint!("template string")
 /// paint!(inline, "template string")   // no trailing newline
-/// paint!(stderr, "template string")   // print to stderr with newline
-/// ```
+/// paint!(stderr, "template string")   // stderr + newline
 ///
-/// # Template Format
-/// ```text
 /// paint!("{red.bold Error:} something went wrong");
 /// paint!("Hello {green.italic world}!");
 /// paint!("{blue Welcome to {bold.underline spraypaint}}");
@@ -66,12 +60,7 @@ pub fn paint(input: TokenStream) -> TokenStream {
 
 /// Return an owned `String` with ANSI styling applied (does not print).
 ///
-/// Use this when you need to pass styled text to a logger, format string, etc.
-///
-/// # Example
 /// ```rust,ignore
-/// use spraypaint::styled;
-///
 /// let msg = styled!("{red.bold Error:} something went wrong");
 /// eprintln!("{msg}");
 /// ```
@@ -99,8 +88,6 @@ pub fn styled(input: TokenStream) -> TokenStream {
     .into()
 }
 
-// ── Input structs ─────────────────────────────────────────────────────────────
-
 enum PrintMode {
     Stdout,
     Inline,
@@ -115,10 +102,8 @@ struct PaintInput {
 
 impl Parse for PaintInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        if input.peek(syn::Ident) && !input.peek2(Token![,]) {
-            // Single ident with no comma: must be the template (treat as error below
-            // if it's not a string literal). Fall through.
-        }
+        // Lone ident without comma isn't a mode flag; fall through to string parse.
+        if input.peek(syn::Ident) && !input.peek2(Token![,]) {}
         if input.peek(syn::Ident) {
             let ident: syn::Ident = input.parse()?;
             let _: Token![,] = input.parse()?;
@@ -148,22 +133,17 @@ impl Parse for PaintInput {
     }
 }
 
-// ── Template AST ──────────────────────────────────────────────────────────────
-
 #[derive(Debug)]
 enum Part {
-    /// A plain string literal fragment.
     Literal(String),
-    /// A `{style1.style2 content}` block.
+    /// `{style1.style2 content}`
     Styled {
         styles: Vec<String>,
         inner: Vec<Part>,
     },
-    /// A `{expr}` interpolation (arbitrary Rust expression).
+    /// `{expr}` — raw Rust expression interpolation.
     Expr(String),
 }
-
-// ── Template parser ───────────────────────────────────────────────────────────
 
 fn parse_template(template: &str, span: Span) -> syn::Result<Vec<Part>> {
     let chars: Vec<char> = template.chars().collect();
@@ -194,7 +174,7 @@ impl Parser {
         c
     }
 
-    /// Parse a sequence of parts until EOF or (if `stop=true`) a closing `}`.
+    /// Parse parts until EOF or a closing `}` (when `stop_at_close` is set).
     fn parse_sequence(&mut self, stop_at_close: bool) -> syn::Result<Vec<Part>> {
         let mut parts = Vec::new();
         let mut literal = String::new();
@@ -210,7 +190,7 @@ impl Parser {
                     if !literal.is_empty() {
                         parts.push(Part::Literal(std::mem::take(&mut literal)));
                     }
-                    self.advance(); // consume '{'
+                    self.advance();
                     parts.push(self.parse_brace()?);
                 }
                 Some(c) => {
@@ -226,31 +206,25 @@ impl Parser {
         Ok(parts)
     }
 
-    /// Parse the content after an opening `{`.
+    /// After consuming `{`, decide if this is a styled block or a raw expression.
     fn parse_brace(&mut self) -> syn::Result<Part> {
-        // Peek ahead to determine whether this is a style spec or a raw expression.
-        // Strategy: read the first "word" (up to whitespace or end of brace group).
         let save = self.pos;
         let first_word = self.read_word();
 
         if !first_word.is_empty() && looks_like_style_spec(&first_word) {
-            // Parse style spec tokens.
             let styles = parse_style_spec(&first_word, self.span)?;
-            // Skip optional single space between spec and content.
             if self.peek() == Some(' ') {
                 self.advance();
             }
             let inner = self.parse_sequence(true)?;
             Ok(Part::Styled { styles, inner })
         } else {
-            // Raw Rust expression: restore position and consume until matching `}`.
             self.pos = save;
             let expr = self.read_until_close_brace()?;
             Ok(Part::Expr(expr.trim().to_string()))
         }
     }
 
-    /// Read contiguous non-whitespace, non-brace characters (the style spec).
     fn read_word(&mut self) -> String {
         let mut word = String::new();
         while let Some(c) = self.peek() {
@@ -263,7 +237,6 @@ impl Parser {
         word
     }
 
-    /// Consume until the matching `}` (handling nested braces), return the content.
     fn read_until_close_brace(&mut self) -> syn::Result<String> {
         let mut s = String::new();
         let mut depth = 1usize;
@@ -293,9 +266,6 @@ impl Parser {
     }
 }
 
-// ── Style spec helpers ────────────────────────────────────────────────────────
-
-/// Return true if every dot-separated token in `spec` is a known style name.
 fn looks_like_style_spec(spec: &str) -> bool {
     spec.split('.').all(|t| {
         let t = t.trim();
@@ -373,8 +343,6 @@ fn parse_style_spec(spec: &str, span: Span) -> syn::Result<Vec<String>> {
     Ok(result)
 }
 
-// ── Code generation ───────────────────────────────────────────────────────────
-
 fn parts_to_exprs(parts: &[Part]) -> Vec<proc_macro2::TokenStream> {
     parts.iter().map(part_to_expr).collect()
 }
@@ -401,9 +369,6 @@ fn part_to_expr(part: &Part) -> proc_macro2::TokenStream {
             let inner_exprs = parts_to_exprs(inner);
             let method_chain = build_method_chain(styles);
 
-            // Collect inner parts into an owned String, then apply the style chain.
-            // `String` implements `Colorize`, so chaining methods returns `Styled<String>`,
-            // which implements `Display` -- safe to pass to `print!`.
             quote! {
                 {
                     use ::std::fmt::Write as _;
@@ -418,7 +383,7 @@ fn part_to_expr(part: &Part) -> proc_macro2::TokenStream {
     }
 }
 
-/// Build a dot-chained method call sequence, e.g. `.red().bold().italic()`.
+/// Produces `.red().bold().italic()` etc.
 fn build_method_chain(styles: &[String]) -> proc_macro2::TokenStream {
     let mut chain = quote! {};
     for style in styles {

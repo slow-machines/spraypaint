@@ -1,4 +1,4 @@
-//! Gradient text: interpolate colors smoothly across a string's characters.
+//! Per-character color gradient rendering.
 
 use std::fmt;
 
@@ -7,14 +7,10 @@ use crate::color::Color;
 use crate::detect::ColorLevel;
 use crate::style::Style;
 
-/// A string with a gradient applied across its characters.
+/// A string with a color gradient applied per character.
 ///
-/// Created via `.gradient()` or `.gradient_multi()` on the
-/// [`Colorize`](crate::Colorize) trait.
-///
-/// The gradient is rendered per **visible character** (Unicode scalar value),
-/// so multibyte characters are handled correctly. ANSI codes are emitted
-/// character-by-character so the color smoothly transitions across the text.
+/// Created via [`Colorize::gradient`](crate::Colorize::gradient) or
+/// [`Colorize::gradient_multi`](crate::Colorize::gradient_multi).
 pub struct Gradient {
     pub(crate) text: String,
     pub(crate) stops: Vec<Color>,
@@ -22,7 +18,7 @@ pub struct Gradient {
 }
 
 impl Gradient {
-    /// Create a two-stop gradient from `from` to `to`.
+    /// Two-stop gradient from `from` to `to`.
     pub fn new(text: impl Into<String>, from: Color, to: Color) -> Self {
         Self {
             text: text.into(),
@@ -31,10 +27,7 @@ impl Gradient {
         }
     }
 
-    /// Create a multi-stop gradient.
-    ///
-    /// # Panics
-    /// Panics if `stops` contains fewer than two elements.
+    /// Multi-stop gradient. Panics if `stops` has fewer than 2 elements.
     pub fn multi_stop(text: impl Into<String>, stops: Vec<Color>) -> Self {
         assert!(
             stops.len() >= 2,
@@ -47,58 +40,56 @@ impl Gradient {
         }
     }
 
-    /// Apply additional text attributes (bold, italic, etc.) on top of the gradient.
+    /// Layer additional attributes (bold, italic, etc.) on top.
     pub fn with_style(mut self, style: Style) -> Self {
         self.base_style = self.base_style.merge(style);
         self
     }
 
-    /// Print the gradient text to stdout with a trailing newline.
+    /// Print to stdout with trailing newline.
     pub fn paint(&self) {
         println!("{self}");
     }
 
-    /// Print the gradient text to stdout **without** a trailing newline.
+    /// Print to stdout without trailing newline.
     pub fn paint_inline(&self) {
         print!("{self}");
     }
 
-    /// Print the gradient text to stderr with a trailing newline.
+    /// Print to stderr with trailing newline.
     pub fn paint_err(&self) {
         eprintln!("{self}");
     }
 
-    // ── Attribute chaining ────────────────────────────────────────────────────
-
-    /// Apply bold to the gradient text.
+    /// Bold.
     pub fn bold(self) -> Self {
         self.with_style(Style::new().bold())
     }
-    /// Apply dim to the gradient text.
+    /// Dim.
     pub fn dim(self) -> Self {
         self.with_style(Style::new().dim())
     }
-    /// Apply italic to the gradient text.
+    /// Italic.
     pub fn italic(self) -> Self {
         self.with_style(Style::new().italic())
     }
-    /// Apply underline to the gradient text.
+    /// Underline.
     pub fn underline(self) -> Self {
         self.with_style(Style::new().underline())
     }
-    /// Apply slow blink to the gradient text.
+    /// Slow blink.
     pub fn blink(self) -> Self {
         self.with_style(Style::new().blink())
     }
-    /// Apply rapid blink to the gradient text.
+    /// Rapid blink.
     pub fn blink_fast(self) -> Self {
         self.with_style(Style::new().blink_fast())
     }
-    /// Apply reverse video to the gradient text.
+    /// Reverse video.
     pub fn reverse(self) -> Self {
         self.with_style(Style::new().reverse())
     }
-    /// Apply strikethrough to the gradient text.
+    /// Strikethrough.
     pub fn strikethrough(self) -> Self {
         self.with_style(Style::new().strikethrough())
     }
@@ -108,7 +99,6 @@ impl fmt::Display for Gradient {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let level = crate::detect::color_level();
 
-        // When color is disabled, just write the text.
         if level == ColorLevel::None {
             return write!(f, "{}", self.text);
         }
@@ -136,7 +126,6 @@ impl fmt::Display for Gradient {
     }
 }
 
-/// Interpolate among a list of color stops at position `t ∈ [0, 1]`.
 fn interpolate(stops: &[Color], t: f32) -> Color {
     let segments = stops.len() - 1;
     let scaled = t * segments as f32;
@@ -157,7 +146,6 @@ fn lerp(a: u8, b: u8, t: f32) -> u8 {
     (a as f32 + (b as f32 - a as f32) * t).round() as u8
 }
 
-/// Convert any [`Color`] to an RGB triple for interpolation purposes.
 fn to_rgb(color: Color) -> (u8, u8, u8) {
     match color {
         Color::Rgb(r, g, b) => (r, g, b),
@@ -166,7 +154,6 @@ fn to_rgb(color: Color) -> (u8, u8, u8) {
     }
 }
 
-/// Approximate RGB values for the 256-color Xterm palette.
 fn xterm256_to_rgb(idx: u8) -> (u8, u8, u8) {
     match idx {
         0 => (0, 0, 0),
@@ -200,7 +187,6 @@ fn xterm256_to_rgb(idx: u8) -> (u8, u8, u8) {
     }
 }
 
-/// Approximate RGB values for the 16 named ANSI colors.
 fn ansi_to_rgb(c: crate::color::AnsiColor) -> (u8, u8, u8) {
     use crate::color::AnsiColor::{
         Black, Blue, BrightBlack, BrightBlue, BrightCyan, BrightGreen, BrightMagenta, BrightRed,

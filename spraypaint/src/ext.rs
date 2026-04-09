@@ -1,8 +1,5 @@
-//! The [`Colorize`] extension trait: add styling to any [`fmt::Display`](std::fmt::Display) value.
+//! [`Colorize`] extension trait — adds styling methods to any [`fmt::Display`] type.
 //!
-//! Import [`Colorize`] to bring all methods into scope.
-//!
-//! # Example
 //! ```
 //! use spraypaint::Colorize;
 //!
@@ -17,470 +14,457 @@ use crate::gradient::Gradient;
 use crate::style::Style;
 use crate::styled::Styled;
 
-/// Extension trait that adds terminal styling methods to any [`fmt::Display`] type.
+/// Adds terminal styling to any [`fmt::Display`] type via a blanket impl.
 ///
-/// All color/style methods return a [`Styled<Self>`] (or [`Gradient`] for `.gradient()`),
-/// which implements [`fmt::Display`] for composition and `.paint()` for direct output.
-///
-/// The blanket implementation `impl<T: Display> Colorize for T` means you never need to
-/// implement this trait manually.
+/// Returns [`Styled<Self>`] (or [`Gradient`] for `.gradient()`), both of which
+/// implement `Display` and expose `.paint()` for direct output.
 pub trait Colorize: fmt::Display + Sized {
-    // ── Core ─────────────────────────────────────────────────────────────────
-
-    /// Apply a complete [`Style`] to this value.
+    /// Wrap with a [`Style`].
     fn style(self, s: Style) -> Styled<Self> {
         Styled::new(self, s)
     }
 
-    // ── Foreground colors ─────────────────────────────────────────────────────
+    // Foreground colors
 
-    /// Set the foreground color to black.
+    /// Black foreground.
     fn black(self) -> Styled<Self> {
         self.style(Style::new().black())
     }
-    /// Set the foreground color to red.
+    /// Red foreground.
     fn red(self) -> Styled<Self> {
         self.style(Style::new().red())
     }
-    /// Set the foreground color to green.
+    /// Green foreground.
     fn green(self) -> Styled<Self> {
         self.style(Style::new().green())
     }
-    /// Set the foreground color to yellow.
+    /// Yellow foreground.
     fn yellow(self) -> Styled<Self> {
         self.style(Style::new().yellow())
     }
-    /// Set the foreground color to blue.
+    /// Blue foreground.
     fn blue(self) -> Styled<Self> {
         self.style(Style::new().blue())
     }
-    /// Set the foreground color to magenta.
+    /// Magenta foreground.
     fn magenta(self) -> Styled<Self> {
         self.style(Style::new().magenta())
     }
-    /// Set the foreground color to cyan.
+    /// Cyan foreground.
     fn cyan(self) -> Styled<Self> {
         self.style(Style::new().cyan())
     }
-    /// Set the foreground color to white.
+    /// White foreground.
     fn white(self) -> Styled<Self> {
         self.style(Style::new().white())
     }
-    /// Set the foreground color to bright black (dark gray).
+    /// Bright black (dark gray) foreground.
     fn bright_black(self) -> Styled<Self> {
         self.style(Style::new().bright_black())
     }
-    /// Set the foreground color to bright red.
+    /// Bright red foreground.
     fn bright_red(self) -> Styled<Self> {
         self.style(Style::new().bright_red())
     }
-    /// Set the foreground color to bright green.
+    /// Bright green foreground.
     fn bright_green(self) -> Styled<Self> {
         self.style(Style::new().bright_green())
     }
-    /// Set the foreground color to bright yellow.
+    /// Bright yellow foreground.
     fn bright_yellow(self) -> Styled<Self> {
         self.style(Style::new().bright_yellow())
     }
-    /// Set the foreground color to bright blue.
+    /// Bright blue foreground.
     fn bright_blue(self) -> Styled<Self> {
         self.style(Style::new().bright_blue())
     }
-    /// Set the foreground color to bright magenta.
+    /// Bright magenta foreground.
     fn bright_magenta(self) -> Styled<Self> {
         self.style(Style::new().bright_magenta())
     }
-    /// Set the foreground color to bright cyan.
+    /// Bright cyan foreground.
     fn bright_cyan(self) -> Styled<Self> {
         self.style(Style::new().bright_cyan())
     }
-    /// Set the foreground color to bright white.
+    /// Bright white foreground.
     fn bright_white(self) -> Styled<Self> {
         self.style(Style::new().bright_white())
     }
 
-    /// Set the foreground to a 24-bit RGB color.
+    /// 24-bit RGB foreground.
     fn rgb(self, r: u8, g: u8, b: u8) -> Styled<Self> {
         self.style(Style::new().rgb(r, g, b))
     }
 
-    /// Set the foreground from a CSS hex string (`#RRGGBB` or `#RGB`).
+    /// Foreground from hex string (`#RRGGBB` or `#RGB`).
     fn hex(self, hex: &str) -> Styled<Self> {
         self.style(Style::new().hex(hex))
     }
 
-    /// Set the foreground to an Xterm 256-color palette index (0–255).
+    /// Xterm 256-color foreground (0–255).
     fn xterm(self, idx: u8) -> Styled<Self> {
         self.style(Style::new().fg(Color::Xterm(idx)))
     }
 
-    // ── Background colors ─────────────────────────────────────────────────────
+    // Background colors
 
-    /// Set the background color to black.
+    /// Black background.
     fn on_black(self) -> Styled<Self> {
         self.style(Style::new().on_black())
     }
-    /// Set the background color to red.
+    /// Red background.
     fn on_red(self) -> Styled<Self> {
         self.style(Style::new().on_red())
     }
-    /// Set the background color to green.
+    /// Green background.
     fn on_green(self) -> Styled<Self> {
         self.style(Style::new().on_green())
     }
-    /// Set the background color to yellow.
+    /// Yellow background.
     fn on_yellow(self) -> Styled<Self> {
         self.style(Style::new().on_yellow())
     }
-    /// Set the background color to blue.
+    /// Blue background.
     fn on_blue(self) -> Styled<Self> {
         self.style(Style::new().on_blue())
     }
-    /// Set the background color to magenta.
+    /// Magenta background.
     fn on_magenta(self) -> Styled<Self> {
         self.style(Style::new().on_magenta())
     }
-    /// Set the background color to cyan.
+    /// Cyan background.
     fn on_cyan(self) -> Styled<Self> {
         self.style(Style::new().on_cyan())
     }
-    /// Set the background color to white.
+    /// White background.
     fn on_white(self) -> Styled<Self> {
         self.style(Style::new().on_white())
     }
-    /// Set the background color to bright black (dark gray).
+    /// Bright black (dark gray) background.
     fn on_bright_black(self) -> Styled<Self> {
         self.style(Style::new().on_bright_black())
     }
-    /// Set the background color to bright red.
+    /// Bright red background.
     fn on_bright_red(self) -> Styled<Self> {
         self.style(Style::new().on_bright_red())
     }
-    /// Set the background color to bright green.
+    /// Bright green background.
     fn on_bright_green(self) -> Styled<Self> {
         self.style(Style::new().on_bright_green())
     }
-    /// Set the background color to bright yellow.
+    /// Bright yellow background.
     fn on_bright_yellow(self) -> Styled<Self> {
         self.style(Style::new().on_bright_yellow())
     }
-    /// Set the background color to bright blue.
+    /// Bright blue background.
     fn on_bright_blue(self) -> Styled<Self> {
         self.style(Style::new().on_bright_blue())
     }
-    /// Set the background color to bright magenta.
+    /// Bright magenta background.
     fn on_bright_magenta(self) -> Styled<Self> {
         self.style(Style::new().on_bright_magenta())
     }
-    /// Set the background color to bright cyan.
+    /// Bright cyan background.
     fn on_bright_cyan(self) -> Styled<Self> {
         self.style(Style::new().on_bright_cyan())
     }
-    /// Set the background color to bright white.
+    /// Bright white background.
     fn on_bright_white(self) -> Styled<Self> {
         self.style(Style::new().on_bright_white())
     }
 
-    /// Set the background to a 24-bit RGB color.
+    /// 24-bit RGB background.
     fn on_rgb(self, r: u8, g: u8, b: u8) -> Styled<Self> {
         self.style(Style::new().on_rgb(r, g, b))
     }
 
-    /// Set the background from a CSS hex string (`#RRGGBB` or `#RGB`).
+    /// Background from hex string (`#RRGGBB` or `#RGB`).
     fn on_hex(self, hex: &str) -> Styled<Self> {
         self.style(Style::new().on_hex(hex))
     }
 
-    // ── Text attributes ───────────────────────────────────────────────────────
+    // Text attributes
 
-    /// Apply bold / increased intensity.
+    /// Bold.
     fn bold(self) -> Styled<Self> {
         self.style(Style::new().bold())
     }
-    /// Apply dim / faint / decreased intensity.
+    /// Dim / faint.
     fn dim(self) -> Styled<Self> {
         self.style(Style::new().dim())
     }
-    /// Apply italic.
+    /// Italic.
     fn italic(self) -> Styled<Self> {
         self.style(Style::new().italic())
     }
-    /// Apply underline.
+    /// Underline.
     fn underline(self) -> Styled<Self> {
         self.style(Style::new().underline())
     }
-    /// Apply slow blink.
+    /// Slow blink.
     fn blink(self) -> Styled<Self> {
         self.style(Style::new().blink())
     }
-    /// Apply rapid blink.
+    /// Rapid blink.
     fn blink_fast(self) -> Styled<Self> {
         self.style(Style::new().blink_fast())
     }
-    /// Apply reverse video (swap foreground and background).
+    /// Reverse video.
     fn reverse(self) -> Styled<Self> {
         self.style(Style::new().reverse())
     }
-    /// Apply hidden / concealed text.
+    /// Hidden / concealed.
     fn hidden(self) -> Styled<Self> {
         self.style(Style::new().hidden())
     }
-    /// Apply strikethrough / crossed-out text.
+    /// Strikethrough.
     fn strikethrough(self) -> Styled<Self> {
         self.style(Style::new().strikethrough())
     }
 
-    // ── Gradient ─────────────────────────────────────────────────────────────
+    // Gradient
 
-    /// Apply a two-stop gradient across the characters of this value's string representation.
+    /// Two-stop color gradient across the displayed characters.
     fn gradient(self, from: Color, to: Color) -> Gradient {
         Gradient::new(self.to_string(), from, to)
     }
 
-    /// Apply a multi-stop gradient (must have at least two stops).
-    ///
-    /// # Panics
-    /// Panics if `stops` has fewer than two elements.
+    /// Multi-stop gradient. Panics if `stops` has fewer than 2 elements.
     fn gradient_multi(self, stops: Vec<Color>) -> Gradient {
         Gradient::multi_stop(self.to_string(), stops)
     }
 }
 
-/// Blanket implementation: any `T: Display` can be colorized.
 impl<T: fmt::Display> Colorize for T {}
 
-// ── `Styled<T>` flat chaining ─────────────────────────────────────────────────
-//
-// `Styled<T>: Display`, so the blanket impl above applies, but calling
-// `.red()` via the trait would return `Styled<Styled<T>>` (nested wrappers).
-// These inherent methods mutate `self.style` in-place and return `Self`,
-// keeping the chain flat and allocation-free.
+// Inherent methods on `Styled<T>` so chaining mutates in-place instead of
+// nesting `Styled<Styled<T>>` through the blanket Colorize impl.
 
 impl<T: fmt::Display> Styled<T> {
-    /// Override the foreground color with red.
+    /// Red foreground.
     pub fn red(mut self) -> Self {
         self.style = self.style.red();
         self
     }
-    /// Override the foreground color with green.
+    /// Green foreground.
     pub fn green(mut self) -> Self {
         self.style = self.style.green();
         self
     }
-    /// Override the foreground color with yellow.
+    /// Yellow foreground.
     pub fn yellow(mut self) -> Self {
         self.style = self.style.yellow();
         self
     }
-    /// Override the foreground color with blue.
+    /// Blue foreground.
     pub fn blue(mut self) -> Self {
         self.style = self.style.blue();
         self
     }
-    /// Override the foreground color with magenta.
+    /// Magenta foreground.
     pub fn magenta(mut self) -> Self {
         self.style = self.style.magenta();
         self
     }
-    /// Override the foreground color with cyan.
+    /// Cyan foreground.
     pub fn cyan(mut self) -> Self {
         self.style = self.style.cyan();
         self
     }
-    /// Override the foreground color with white.
+    /// White foreground.
     pub fn white(mut self) -> Self {
         self.style = self.style.white();
         self
     }
-    /// Override the foreground color with black.
+    /// Black foreground.
     pub fn black(mut self) -> Self {
         self.style = self.style.black();
         self
     }
-    /// Override the foreground color with bright red.
+    /// Bright red foreground.
     pub fn bright_red(mut self) -> Self {
         self.style = self.style.bright_red();
         self
     }
-    /// Override the foreground color with bright green.
+    /// Bright green foreground.
     pub fn bright_green(mut self) -> Self {
         self.style = self.style.bright_green();
         self
     }
-    /// Override the foreground color with bright yellow.
+    /// Bright yellow foreground.
     pub fn bright_yellow(mut self) -> Self {
         self.style = self.style.bright_yellow();
         self
     }
-    /// Override the foreground color with bright blue.
+    /// Bright blue foreground.
     pub fn bright_blue(mut self) -> Self {
         self.style = self.style.bright_blue();
         self
     }
-    /// Override the foreground color with bright magenta.
+    /// Bright magenta foreground.
     pub fn bright_magenta(mut self) -> Self {
         self.style = self.style.bright_magenta();
         self
     }
-    /// Override the foreground color with bright cyan.
+    /// Bright cyan foreground.
     pub fn bright_cyan(mut self) -> Self {
         self.style = self.style.bright_cyan();
         self
     }
-    /// Override the foreground color with bright white.
+    /// Bright white foreground.
     pub fn bright_white(mut self) -> Self {
         self.style = self.style.bright_white();
         self
     }
-    /// Override the foreground color with bright black (dark gray).
+    /// Bright black (dark gray) foreground.
     pub fn bright_black(mut self) -> Self {
         self.style = self.style.bright_black();
         self
     }
 
-    /// Set the background color to black.
+    /// Black background.
     pub fn on_black(mut self) -> Self {
         self.style = self.style.on_black();
         self
     }
-    /// Set the background color to red.
+    /// Red background.
     pub fn on_red(mut self) -> Self {
         self.style = self.style.on_red();
         self
     }
-    /// Set the background color to green.
+    /// Green background.
     pub fn on_green(mut self) -> Self {
         self.style = self.style.on_green();
         self
     }
-    /// Set the background color to yellow.
+    /// Yellow background.
     pub fn on_yellow(mut self) -> Self {
         self.style = self.style.on_yellow();
         self
     }
-    /// Set the background color to blue.
+    /// Blue background.
     pub fn on_blue(mut self) -> Self {
         self.style = self.style.on_blue();
         self
     }
-    /// Set the background color to magenta.
+    /// Magenta background.
     pub fn on_magenta(mut self) -> Self {
         self.style = self.style.on_magenta();
         self
     }
-    /// Set the background color to cyan.
+    /// Cyan background.
     pub fn on_cyan(mut self) -> Self {
         self.style = self.style.on_cyan();
         self
     }
-    /// Set the background color to white.
+    /// White background.
     pub fn on_white(mut self) -> Self {
         self.style = self.style.on_white();
         self
     }
-    /// Set the background color to bright black (dark gray).
+    /// Bright black (dark gray) background.
     pub fn on_bright_black(mut self) -> Self {
         self.style = self.style.on_bright_black();
         self
     }
-    /// Set the background color to bright red.
+    /// Bright red background.
     pub fn on_bright_red(mut self) -> Self {
         self.style = self.style.on_bright_red();
         self
     }
-    /// Set the background color to bright green.
+    /// Bright green background.
     pub fn on_bright_green(mut self) -> Self {
         self.style = self.style.on_bright_green();
         self
     }
-    /// Set the background color to bright yellow.
+    /// Bright yellow background.
     pub fn on_bright_yellow(mut self) -> Self {
         self.style = self.style.on_bright_yellow();
         self
     }
-    /// Set the background color to bright blue.
+    /// Bright blue background.
     pub fn on_bright_blue(mut self) -> Self {
         self.style = self.style.on_bright_blue();
         self
     }
-    /// Set the background color to bright magenta.
+    /// Bright magenta background.
     pub fn on_bright_magenta(mut self) -> Self {
         self.style = self.style.on_bright_magenta();
         self
     }
-    /// Set the background color to bright cyan.
+    /// Bright cyan background.
     pub fn on_bright_cyan(mut self) -> Self {
         self.style = self.style.on_bright_cyan();
         self
     }
-    /// Set the background color to bright white.
+    /// Bright white background.
     pub fn on_bright_white(mut self) -> Self {
         self.style = self.style.on_bright_white();
         self
     }
 
-    /// Set the foreground to an RGB color.
+    /// RGB foreground.
     pub fn rgb(mut self, r: u8, g: u8, b: u8) -> Self {
         self.style = self.style.rgb(r, g, b);
         self
     }
-    /// Set the background to an RGB color.
+    /// RGB background.
     pub fn on_rgb(mut self, r: u8, g: u8, b: u8) -> Self {
         self.style = self.style.on_rgb(r, g, b);
         self
     }
-    /// Set the foreground from a CSS hex string.
+    /// Hex foreground.
     pub fn hex(mut self, h: &str) -> Self {
         self.style = self.style.hex(h);
         self
     }
-    /// Set the background from a CSS hex string.
+    /// Hex background.
     pub fn on_hex(mut self, h: &str) -> Self {
         self.style = self.style.on_hex(h);
         self
     }
 
-    /// Apply bold.
+    /// Bold.
     pub fn bold(mut self) -> Self {
         self.style = self.style.bold();
         self
     }
-    /// Apply dim.
+    /// Dim.
     pub fn dim(mut self) -> Self {
         self.style = self.style.dim();
         self
     }
-    /// Apply italic.
+    /// Italic.
     pub fn italic(mut self) -> Self {
         self.style = self.style.italic();
         self
     }
-    /// Apply underline.
+    /// Underline.
     pub fn underline(mut self) -> Self {
         self.style = self.style.underline();
         self
     }
-    /// Apply slow blink.
+    /// Slow blink.
     pub fn blink(mut self) -> Self {
         self.style = self.style.blink();
         self
     }
-    /// Apply rapid blink.
+    /// Rapid blink.
     pub fn blink_fast(mut self) -> Self {
         self.style = self.style.blink_fast();
         self
     }
-    /// Apply reverse video.
+    /// Reverse video.
     pub fn reverse(mut self) -> Self {
         self.style = self.style.reverse();
         self
     }
-    /// Apply hidden / concealed text.
+    /// Hidden.
     pub fn hidden(mut self) -> Self {
         self.style = self.style.hidden();
         self
     }
-    /// Apply strikethrough.
+    /// Strikethrough.
     pub fn strikethrough(mut self) -> Self {
         self.style = self.style.strikethrough();
         self
